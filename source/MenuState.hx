@@ -35,7 +35,7 @@ class MenuState extends FlxState
         
         #if flash
         
-            #if debug
+            #if WIP
             var prefix:String = "../../../";
             
             var urlLoader:URLLoader = new URLLoader();
@@ -52,7 +52,7 @@ class MenuState extends FlxState
         
             var prefix:String = "";
             
-            #if debug
+            #if WIP
             prefix = "../../../../";
             #end
         
