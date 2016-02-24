@@ -1,10 +1,15 @@
 package ;
 
+import core.misc.CustomInterp;
 import core.system.HScriptManager;
 import core.util.ScriptLoader;
+import flixel.FlxBasic;
 import flixel.FlxG;
+import flixel.FlxObject;
+import flixel.FlxSprite;
 import flixel.FlxState;
-import hscript.Interp;
+import flixel.system.debug.watch.Tracker.TrackerProfile;
+import flixel.tweens.FlxTween;
 
 using core.util.CustomExtension;
 
@@ -13,6 +18,9 @@ using core.util.CustomExtension;
  */
 class MenuState extends FlxState
 {
+    private var player:Player;
+    private var interp:CustomInterp;
+    
 	/**
 	 * Function that is called up when to state is created to set it up.
 	 */
@@ -22,8 +30,29 @@ class MenuState extends FlxState
         
         FlxG.debugger.visible = true;
         
-        var interp:Interp = new Interp();
+        player = new Player();
+        this.add(player);
+        
+        //testing some debug feature
+
+        FlxG.debugger.addTrackerProfile(new TrackerProfile(Player, ["isReadyToJump", "_shootCounter", "_jumpPower"], [FlxBasic]));
+        //FlxG.debugger.addTrackerProfile(new TrackerProfile(Player, ["isReadyToJump", "_shootCounter", "_jumpPower"], [FlxSprite]));
+        
+        FlxG.debugger.track(player);
+        
+        FlxG.bitmapLog.add(player.pixels);
+        FlxG.console.registerObject("player", player);
+        FlxG.console.registerFunction("testPrintSomething", function ():Void 
+        {
+            FlxG.log.add("just test print something.");
+        });
+        //---------------------------------------
+        
+        interp = new CustomInterp();
         interp.CommonInitial();
+        interp.variables.set("player", player);
+        interp.variables.set("testCreateFunction", function () : Void {});
+        interp.variables.set("testUpdateFunction", function () : Void {});
         
         HScriptManager.Get().Initial(function ():Void 
         {
@@ -32,6 +61,8 @@ class MenuState extends FlxState
             var GetParsedScript:String->Dynamic = HScriptManager.Get().GetParsedScript;
             
             interp.execute(GetParsedScript(AssetPaths.config__hs));
+            
+            interp.variables.get("testCreateFunction")();
         });
 	}
 
@@ -49,6 +80,15 @@ class MenuState extends FlxState
 	 */
 	override public function update(elapsed:Float):Void
 	{
-		super.update(FlxG.elapsed);
+		super.update(elapsed);
+        
+        interp.variables.get("testUpdateFunction")(elapsed);
 	}
+}
+
+class Player extends FlxSprite
+{
+    private  var isReadyToJump:Bool;
+    private  var _shootCounter:Float;
+    private  var _jumpPower:Float;
 }
