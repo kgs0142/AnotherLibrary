@@ -1,5 +1,6 @@
 package ;
 
+import core.util.ScriptLoader;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.FlxState;
@@ -32,6 +33,8 @@ class MenuState extends FlxState
 		super.create();
         
         FlxG.debugger.visible = true;
+        
+        
         
         #if flash
         
