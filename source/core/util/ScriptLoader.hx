@@ -1,10 +1,11 @@
 package core.util;
 
+import openfl.Assets;
+
 #if flash
 import flash.events.Event;
 import flash.net.URLLoader;
 import flash.net.URLRequest;
-import flixel.FlxG;
 
 #elseif (cpp || neko)
 import sys.io.File;
@@ -17,7 +18,6 @@ import sys.io.File;
  */
 class ScriptLoader
 {
-
     private static var ms_Instance:ScriptLoader;
     
     private var m_scriptMap:Map<String, String>;
@@ -31,8 +31,12 @@ class ScriptLoader
     {
         this.m_scriptMap = null;
     }
-    
+
+    #if WIP
+    public function LoadScript(pathId:String, callback:String->Void, force:Bool = true) : Void
+    #else
     public function LoadScript(pathId:String, callback:String->Void, force:Bool = false) : Void
+    #end
     {
         if (force == false && this.m_scriptMap.exists(pathId))
         {
@@ -40,32 +44,38 @@ class ScriptLoader
             return;
         }
         
-        this.DoLoadScript(pathId);
-    }
-    
-    private function DoLoadScript(pathId:String):Void 
-    {
-        //callbacks
+        //{ Do loading scripts }
+        
+        //local callback
         var LoadScriptComplete:String->Void = function (script:String) : Void
         {
-            trace("script: " + script);
-
-            FlxG.log.add("assets, script: " + script);
+            //trace("script: " + script);
+            
+            this.m_scriptMap.set(pathId, script);
+            
+            callback(script);
         }
         
         #if flash
-        
-            var OnScriptLoadComplete:Event->Void = function (e:Event) : Void
+            #if WIP
+            //We need this reference, this is a trick way I learned from AS3.
+            var OnScriptLoadComplete:Event->Void = function (e:Event) : Void {};
+            OnScriptLoadComplete = function (e:Event) : Void
             {
                 var urlLoader:URLLoader = e.target;
-                urlLoader.removeEventListener(Event.COMPLETE, arguments.callee);
+                //trace("Has Event.Complete ? :" + urlLoader.hasEventListener(Event.COMPLETE));
+                urlLoader.removeEventListener(Event.COMPLETE, OnScriptLoadComplete);
+                //trace("Has Event.Complete ? :" + urlLoader.hasEventListener(Event.COMPLETE));
                 
                 var script:String = cast(urlLoader.data, String);
                 
-                FlxG.log.add("loader, script: " + script);
+                //trace("script: " + script);
+            
+                this.m_scriptMap.set(pathId, script);
+                
+                callback(script);
             }
         
-            #if WIP
             var prefix:String = "../../../";
             var urlLoader:URLLoader = new URLLoader();
             urlLoader.addEventListener(Event.COMPLETE, OnScriptLoadComplete);
@@ -76,9 +86,8 @@ class ScriptLoader
             Assets.loadText(AssetPaths.config__hs, LoadScriptComplete);
             
             #end
-            
-		#elseif (cpp || neko)
         
+		#elseif (cpp || neko)
             var prefix:String = "";
             
             #if WIP
@@ -89,12 +98,15 @@ class ScriptLoader
             LoadScriptComplete(script);
         
         #else
-        
             //Load embeded asset (flash)
             Assets.loadText(AssetPaths.config__hs, LoadScriptComplete);
             
 		#end
+        
+        //} endregion
+        
     }
+    
     
     public static function Get() : ScriptLoader
     {
