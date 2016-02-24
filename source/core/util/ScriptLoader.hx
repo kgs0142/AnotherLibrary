@@ -32,11 +32,7 @@ class ScriptLoader
         this.m_scriptMap = null;
     }
 
-    #if WIP
-    public function LoadScript(pathId:String, callback:String->Void, force:Bool = true) : Void
-    #else
     public function LoadScript(pathId:String, callback:String->Void, force:Bool = false) : Void
-    #end
     {
         if (force == false && this.m_scriptMap.exists(pathId))
         {

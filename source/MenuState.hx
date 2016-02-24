@@ -1,8 +1,12 @@
 package ;
 
+import core.system.HScriptManager;
 import core.util.ScriptLoader;
 import flixel.FlxG;
 import flixel.FlxState;
+import hscript.Interp;
+
+using core.util.CustomExtension;
 
 /**
  * A FlxState which can be used for the game's menu.
@@ -18,10 +22,16 @@ class MenuState extends FlxState
         
         FlxG.debugger.visible = true;
         
-        ScriptLoader.Get().LoadScript(AssetPaths.config__hs, function(script:String):Void
+        var interp:Interp = new Interp();
+        interp.CommonInitial();
+        
+        HScriptManager.Get().Initial(function ():Void 
         {
-            trace("I got the script: " + script);
-            FlxG.log.add("I got the script: " + script);
+            trace("HScriptManager.Get().Initial Complete");
+            
+            var GetParsedScript:String->Dynamic = HScriptManager.Get().GetParsedScript;
+            
+            interp.execute(GetParsedScript(AssetPaths.config__hs));
         });
 	}
 
