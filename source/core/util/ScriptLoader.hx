@@ -75,11 +75,11 @@ class ScriptLoader
             var prefix:String = "../../../";
             var urlLoader:URLLoader = new URLLoader();
             urlLoader.addEventListener(Event.COMPLETE, OnScriptLoadComplete);
-            urlLoader.load(new URLRequest(prefix + AssetPaths.config__hs));
+            urlLoader.load(new URLRequest(prefix + pathId));
             
             #else
             //Load embeded asset (flash)
-            Assets.loadText(AssetPaths.config__hs, LoadScriptComplete);
+            Assets.loadText(pathId, LoadScriptComplete);
             
             #end
         
@@ -90,12 +90,12 @@ class ScriptLoader
             prefix = "../../../../";
             #end
         
-            var script:String = File.getContent(prefix + AssetPaths.config__hs);
+            var script:String = File.getContent(prefix + pathId);
             LoadScriptComplete(script);
         
         #else
             //Load embeded asset (flash)
-            Assets.loadText(AssetPaths.config__hs, LoadScriptComplete);
+            Assets.loadText(pathId, LoadScriptComplete);
             
 		#end
         
