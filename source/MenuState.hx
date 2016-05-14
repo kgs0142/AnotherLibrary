@@ -2,6 +2,7 @@ package ;
 
 import core.misc.CustomInterp;
 import core.system.HScriptManager;
+import core.ui.UIDialogText;
 import core.util.ScriptLoader;
 import flixel.FlxBasic;
 import flixel.FlxG;
@@ -28,13 +29,12 @@ class MenuState extends FlxState
 	{
 		super.create();
         
-        FlxG.debugger.visible = true;
-        
         player = new Player();
         this.add(player);
         
         //testing some debug feature
-
+        //FlxG.debugger.visible = true;
+        
         FlxG.debugger.addTrackerProfile(new TrackerProfile(Player, ["isReadyToJump", "_shootCounter", "_jumpPower"], [FlxBasic]));
         //FlxG.debugger.addTrackerProfile(new TrackerProfile(Player, ["isReadyToJump", "_shootCounter", "_jumpPower"], [FlxSprite]));
         
@@ -46,13 +46,27 @@ class MenuState extends FlxState
         {
             FlxG.log.add("just test print something.");
         });
-        //---------------------------------------
+        //-------------------------------------------------------------------------------------
         
+        //Dialog box, with delay char and custom code (dialog audio)
+        var dialog:UIDialogText = new UIDialogText(10, 10, 150, 
+        "Muhahahah, yahahaha, wahahaha, ::sound:assets/sounds/dialog/hello:hello.", 8);
+        this.add(dialog);
+        dialog.start(0.1);
+        //-------------------------------------------------------------------------------------
+        
+        //HScriptManager AddQueue, ReloadAllHScript
         interp = new CustomInterp();
         interp.CommonInitial();
         interp.variables.set("player", player);
         interp.variables.set("testCreateFunction", function () : Void {});
         interp.variables.set("testUpdateFunction", function () : Void {});
+        
+        #if WIP
+        var force:Bool = true;
+        #else
+        var force:Bool = false;
+        #end
         
         HScriptManager.Get().Initial(function ():Void 
         {
@@ -64,6 +78,12 @@ class MenuState extends FlxState
             
             interp.variables.get("testCreateFunction")();
         });
+        
+        //Queue
+        HScriptManager.Get().AddLoadQueue(AssetPaths.config__hs, force);
+        
+        HScriptManager.Get().ReloadAllHScript();
+        //--------------------------------------------------------------------------------------
 	}
 
 	/**

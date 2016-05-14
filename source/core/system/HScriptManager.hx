@@ -36,41 +36,35 @@ class HScriptManager
     {
         this.m_funcLoadComplete = callback;
         
-        this.ReloadAllHScript();
+        this.m_uiTotalCount = 0;
+        this.m_LoadQueue.clear();
+        
+        //this.ReloadAllHScript();
     }
     
     public function Destory() : Void 
     {
     }
     
-    public function GetParsedScript(pathId:String) : Dynamic
+    public function ReloadAllHScript() : Void
     {
-        return this.m_Cache.get(pathId);
-    }
-    
-    private function ReloadAllHScript() : Void
-    {
-        #if WIP
-        var force:Bool = true;
-        #else
-        var force:Bool = false;
-        #end
-     
         this.m_uiAccuCount = 0;
-        this.m_uiTotalCount = 0;
-        this.m_LoadQueue.clear();
-        
-        //Queue
-        this.AddLoadQueue(AssetPaths.config__hs, force);
+        this.m_uiTotalCount = this.m_LoadQueue.length;
+        //this.m_LoadQueue.clear();
         
         this.StartLoad();
     }
     
-    private function AddLoadQueue(pathId:String, force:Bool):Void 
+    public function AddLoadQueue(pathId:String, force:Bool):Void 
     {
         this.m_uiTotalCount++;
         
         this.m_LoadQueue.add(new LoadUnit(pathId, force));
+    }
+    
+    public function GetParsedScript(pathId:String) : Dynamic
+    {
+        return this.m_Cache.get(pathId);
     }
     
     private function StartLoad():Void 
