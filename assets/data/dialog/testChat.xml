@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<data name="firstStage_MainDialog">
+    
+    <inject name="test_inject_01"/>
+
+    <content text="Hello there, can you hear me?" speaker="System"/>
+    <content text="First, only title " title="test title" speaker="System" />
+    <content text="Second, both head pic and title " head="player_talk_01" title="test title" speaker="System"/>
+    <content text="Third, only head" head="player_talk_01" />
+
+    <content drama="acting_001" />
+
+    <content choice="first_choices" />
+
+    <content text="This dialog showing after you exit the choice" head="player_talk_01" />
+
+
+    <!-- Choice -->
+    <choice name="first_choices" title="The First Choice" initial="test_chat_block_01">
+        <item text="Go back to head and hear again" goto="test_chat_block_01" />
+        <item text="Choice B" goto="test_chat_block_02" once="true"/>
+        <item text="Choice C" goto="test_chat_block_03" leave="true"/>
+    </choice>
+
+    <!-- Block area -->
+    <data name="test_chat_block_01">
+        <content text="This is the head of this testing choices." />
+        <content text="Saying something balabala." />
+    </data>
+
+    <data name="test_chat_block_02">
+        <content text="You will only see this block once" />
+    </data>
+
+    <data name="test_chat_block_03">
+        <content text="'Choice C'" />
+        <inject name="test_inject_02"/>
+    </data>
+
+
+</data>

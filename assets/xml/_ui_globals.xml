@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<data>
+	
+    <definition id="prstart8" font="prstart" size="8" color="0xffffff" outline="0x000000" align="left"/>
+    <definition id="prstart8c" font="prstart" size="8" color="0xffffff" outline="0x000000" align="center"/>
+
+    <definition id="prstartk8" font="prstartk" size="8" color="0xffffff" outline="0x000000" align="left"/>
+    <definition id="prstartk8c" font="prstartk" size="8" color="0xffffff" outline="0x000000" align="center"/>
+
+</data>

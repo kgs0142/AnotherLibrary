@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<data>
+
+    <definition id="btn" width="100" height="10" align="center"/>
+	
+    <sprite name="dt_bg" x="2" y="108" width="196" height="50" color="0x404040"/>
+    
+	<button id="button_0" label="Thing 0" use_def="btn" x="50" y="115">
+		<param type="int" value="0"/>
+	</button>
+	<button id="button_1" label="Thing 1" use_def="btn" x="50" y="130">
+		<param type="int" value="1"/>
+	</button>
+	<button id="button_2" label="Thing 2" use_def="btn" x="50" y="145">
+		<param type="int" value="2"/>
+	</button>
+    
+</data>

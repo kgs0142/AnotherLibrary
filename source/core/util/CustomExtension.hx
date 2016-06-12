@@ -1,4 +1,6 @@
 package core.util;
+import flixel.addons.ui.FlxUIState;
+import flixel.addons.ui.FlxUISubState;
 import flixel.FlxG;
 import flixel.tweens.FlxTween;
 import hscript.Interp;

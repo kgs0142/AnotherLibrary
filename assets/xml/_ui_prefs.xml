@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<data>
+    <include name="_ui_globals"/>
+
+    <!--sprite x="0" y="0" width="screen.width" height="screen.height" color="0x404040"/-->
+
+    <!--Some dialog elements and placeholder-->
+    <sprite name="dt_bg" x="2" y="108" width="196" height="50" color="0x404040"/>
+    <text name="dt_name" x="2" y="108" width="50" align="center" text="" size="8" />
+    <region name="dt_head" x="2" y="118" width="50" height="40" />
+    <text name="dt_title" x="52" y="108" width="146" align="center" size="8"/>
+    <region name="dt_text_w_head_title" x="52" y="118" width="146" height="40" />
+    <region name="dt_text_w_head" x="52" y="108" width="146" height="50" />
+    <region name="dt_text_w_title" x="2" y="128" width="196" height="50" />
+    <region name="dt_text_wo_head_title" x="2" y="108" width="196" height="50" />
+
+    <sprite name="float_dt_bg" x="0" y="10" width="60" height="25" color="0x40404066"/>
+    
+    <!--<text name="test_float_dg_text" x="0" y="10" text="hello there" size="8" width="60" align="left" /-->
+
+    <!--<text name="test_dg_text" x="52" y="118" text="Tab menu buttons and their contents can also have tooltips" use_def="prstart8" width="146" align="left" /-->
+
+</data>

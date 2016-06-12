@@ -2,8 +2,11 @@ package core.ui;
 
 import flash.media.Sound;
 import flixel.addons.text.FlxTypeText;
+import flixel.addons.ui.FlxUIRegion;
 import flixel.FlxG;
+import flixel.input.keyboard.FlxKey;
 import flixel.system.FlxAssets;
+import haxe.xml.Fast;
 
 using core.util.CustomExtension;
 
@@ -27,11 +30,17 @@ class UIDialogText extends FlxTypeText
     //dialog audio
     private var m_mapDialogPos:Map<Int, String>;
     
-    public function new(X:Float, Y:Float, Width:Int, Text:String, Size:Int=8, EmbeddedFont:Bool=true) 
+    public var m_confirmKeys:Array<FlxKey> = [];
+    
+    private var m_funcCompleteCallback:Void->Void;
+    private var m_bTypeComplete:Bool;
+    
+    public function new(X:Float = 0, Y:Float = 0, Width:Int = 0, Text:String = "", Size:Int=8, EmbeddedFont:Bool=true) 
     {
         super(X, Y, Width, Text, Size, EmbeddedFont);
         
         this.m_DelayChars = [];
+        this.m_bTypeComplete = false;
         this.m_mapDialogPos = new Map<Int, String>();
         
         this.DoCustomCodeProcessOnFinalText();
@@ -48,6 +57,40 @@ class UIDialogText extends FlxTypeText
     
     override public function update(elapsed:Float):Void 
     {
+        //Custom skip and complete process-----------------------------------------------
+
+        #if !FLX_NO_KEYBOARD
+        
+        if (m_bTypeComplete == true && FlxG.keys.anyJustPressed(m_confirmKeys))
+        {
+            if (this.m_funcCompleteCallback != null)
+            {
+                var funcTemp:Void->Void = this.m_funcCompleteCallback;
+                this.m_funcCompleteCallback = null;
+                funcTemp();
+            }
+        }
+        
+		#end
+        
+        if (FlxG.mouse.justPressed == true)
+        {
+            skip();
+        }
+        
+        if (m_bTypeComplete == true && FlxG.mouse.justPressed == true)
+        {
+            if (this.m_funcCompleteCallback != null)
+            {
+                var funcTemp:Void->Void = this.m_funcCompleteCallback;
+                this.m_funcCompleteCallback = null;
+                funcTemp();
+            }
+        }
+        
+        //------------------------------------------------------------------------------
+        
+        
         super.update(elapsed);
 
         //Delay chars process.
@@ -78,7 +121,7 @@ class UIDialogText extends FlxTypeText
         }
     }
     
-    private function SetDefaultSetting() : Void 
+    public function SetDefaultSetting() : Void 
     {
         this.delay = 0.1;
 		this.eraseDelay = 0.2;
@@ -90,7 +133,8 @@ class UIDialogText extends FlxTypeText
 		this.waitTime = 2.0;
 		this.setTypingVariation(0.75, true);
 		this.color = 0x8811EE11;
-		this.skipKeys = ["SPACE"];
+		this.skipKeys = ["X", "SPACE"];
+        this.m_confirmKeys = ["Z"];
         this.useDefaultSound = false;
         this.sounds = [FlxG.sound.load(FlxAssets.getSound(AssetPaths.defaultTypetext__ogg.ExcludeExt()))];
         
@@ -102,12 +146,41 @@ class UIDialogText extends FlxTypeText
     {
         this.m_fDelayCharFactor = factor;
     }
+
+	@:access(Xml)
+    public function SetData(region:FlxUIRegion, content:Fast):Void 
+    {
+        this.x = region.x;
+        this.y = region.y;
+        this.width = region.width;
+        
+        var txtContent:String = flixel.addons.ui.U.xml_str(content.x, "text");
+        
+        this.resetText(txtContent);
+    }
     
     override public function resetText(Text:String) : Void 
     {
         super.resetText(Text);
         
         this.DoCustomCodeProcessOnFinalText();
+    }
+    
+    override public function start(?Delay:Float, ForceRestart:Bool = false, AutoErase:Bool = false, ?SkipKeys:Array<FlxKey>, ?Callback:Void -> Void):Void 
+    {
+        this.m_bTypeComplete = false;
+
+        if (Callback != null)
+        {
+            this.m_funcCompleteCallback = Callback;
+        }
+        
+        super.start(Delay, ForceRestart, AutoErase, SkipKeys, this.SetTypeCompleteFlag);
+    }
+    
+    private function SetTypeCompleteFlag() : Void 
+    {
+        this.m_bTypeComplete = true;
     }
     
     private function DoCustomCodeProcessOnFinalText() : Void 
