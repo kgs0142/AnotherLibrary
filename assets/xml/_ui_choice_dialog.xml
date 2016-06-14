@@ -14,5 +14,8 @@
 	<button id="button_2" label="Thing 2" use_def="btn" x="50" y="145">
 		<param type="int" value="2"/>
 	</button>
-    
+    <button id="button_3" label="Thing 3" use_def="btn" x="50" y="160">
+        <param type="int" value="3"/>
+    </button>
+
 </data>

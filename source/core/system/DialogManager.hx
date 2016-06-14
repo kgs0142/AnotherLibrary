@@ -20,6 +20,15 @@ abstract MainDialogType(Int)
     var W_HEAD_TITLE = 3;
 }
 
+@:enum
+abstract DialogContentType(Int)
+{
+    var REGULAR_DIALOG = 0;
+    var DRAMA = 1;
+    var CHOICE = 2;
+    var GOTO = 3;
+}
+
 /**
  * ...
  * @author User
@@ -160,8 +169,18 @@ class DialogManager extends FlxObject
     //}
     
 	@:access(Xml)
-    public function ProcessMainDialogData(content:Fast, completeCallback:Void->Void):Void 
+    public function ProcessContentDialogData(content:Fast, completeCallback:Void->Void):Void 
     {
+        //make sure what the functions this content want to do first, there are priority.
+        var contentType:DialogContentType = DialogContentType.REGULAR_DIALOG;
+        contentType = content.has.drama ? DialogContentType.DRAMA : contentType;
+        contentType = content.has.choice ? DialogContentType.CHOICE : contentType;
+        contentType = content.has.goto ? DialogContentType.GOTO : contentType;
+        
+        //then decide what to do.
+        
+        //--------
+        
         var name:String = U.xml_str(content.x, "name");
         var title:String = U.xml_str(content.x, "title");
         var headPicAnim:String = U.xml_str(content.x, "head");

@@ -7,6 +7,7 @@ import flixel.addons.ui.FlxUIButton;
 import flixel.addons.ui.FlxUICursor;
 import flixel.addons.ui.FlxUISubState;
 import flixel.addons.ui.interfaces.IFlxUIWidget;
+import flixel.addons.ui.U;
 import flixel.input.keyboard.FlxKey;
 import flixel.math.FlxPoint;
 import flixel.util.FlxColor;
@@ -20,9 +21,11 @@ typedef UIUtil = flixel.addons.ui.U;
  */
 class UIChoiceDialogSubState extends FlxUISubState
 {
-    private var _clickChoiceCallback:Int->Void;
+    private var _clickChoiceCallback:Int->Array<Dynamic>->Void;
     
     private var _buttons:Array<FlxUIButton>;
+    
+    private var _choiceData:ChoiceStructure;
     
     public function new(BGColor:FlxColor=0) 
     {
@@ -68,11 +71,20 @@ class UIChoiceDialogSubState extends FlxUISubState
             switch (id) 
             {
                 case "cursor_click", "click_button" :
-                    trace(id + ": " + fuib.params);
+                    var index:Int = -1;
+                    //we've set the first param as index of button in the xml file.
+                    index = (fuib.params.length > 0) ? cast(fuib.params[0], Int) : index;
+                    
+                    trace(id + ": " + index + " clicked");
+                    
+                    //also process the params might also set in the dialog xml data.
+                    var params:Array<Dynamic> = UIChoiceDialogSubState.GetParams(this._choiceData.items[index]);
+                    
+                    trace("params: " + params);
                     
                     if (_clickChoiceCallback != null)
                     {
-                        this._clickChoiceCallback(cast(fuib.params, Int));
+                        this._clickChoiceCallback(index, params);
                     }
                     
                 default:
@@ -91,7 +103,7 @@ class UIChoiceDialogSubState extends FlxUISubState
     }
     
 	@:access(Xml)
-    public function ShowChoices(choiceData:ChoiceStructure, clickCallback:Int->Void):Void 
+    public function ShowChoices(choiceData:ChoiceStructure, clickCallback:Int->Array<Dynamic>->Void):Void 
     {
         this._clickChoiceCallback = clickCallback;
         
@@ -160,6 +172,66 @@ class UIChoiceDialogSubState extends FlxUISubState
         }
         #end
     }
+    
+    //Copied from FlxUI
+    private static inline function GetParams(data:Fast) : Array<Dynamic>
+    {
+        var params:Array<Dynamic> = null;
+        
+        if (data.hasNode.param) 
+        {
+            params = new Array<Dynamic>();
+            for (param in data.nodes.param) 
+            {
+                if (param.has.type && param.has.value)
+                {
+                    var type:String = param.att.type;
+                    type = type.toLowerCase();
+                    var valueStr:String = param.att.value;
+                    var value:Dynamic = valueStr;
+                    var sort:Int = flixel.addons.ui.U.xml_i(param.x, "sort",-1);
+                    switch(type) {
+                        case "string": value = new String(valueStr);
+                        case "int": value = Std.parseInt(valueStr);
+                        case "float": value = Std.parseFloat(valueStr);
+                        case "color", "hex": value = flixel.addons.ui.U.parseHex(valueStr, true);
+                        case "bool", "boolean": 
+                            var str:String = new String(valueStr);
+                            str = str.toLowerCase();
+                            if (str == "true" || str == "1") 
+                            {
+                                value = true;
+                            }
+                            else
+                            {
+                                value = false;
+                            }
+                    }
+                    
+                    //Add sorting metadata to the array
+                    params.push( { sort:sort, value:value } );
+                }
+            }
+            
+            //Sort the array
+            params.sort(SortParams);
+            
+            //Strip out the sorting metdata
+            for (i in 0...params.length) 
+            {
+                params[i] = params[i].value;
+            }
+        }
+        return params;
+    }
+    
+    private static function SortParams(a:flixel.addons.ui.FlxUI.SortValue, b:flixel.addons.ui.FlxUI.SortValue):Int
+	{
+		if (a.sort < b.sort) return -1;
+		if (a.sort > b.sort) return 1;
+		return 0;
+	}
+    
     //}
     
 }

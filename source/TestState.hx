@@ -51,7 +51,6 @@ class TestState extends FlxUIState
         //test choice dialog--------------------------------------------------------------------------
         //this.persistentUpdate = true;
         //this.openSubState(new UIChoiceDialogSubState());
-        this.
         //return;
         
         //load dialog xml files for testing-------------------------------------
@@ -70,7 +69,9 @@ class TestState extends FlxUIState
         
 		#end
         
+        this.dialogList = new List<DialogNodeStructure>();
         this.defaultDialogNode = new DialogNodeStructure();
+        this.dialogList.add(defaultDialogNode);
         
         this.TestLoadDialogXml(fast, "firstStage", defaultDialogNode);
         
@@ -79,20 +80,33 @@ class TestState extends FlxUIState
     
     private function DoDialogProcess():Void 
     {
-        if (defaultDialogNode.ReachTheEnd() == true)
+        var node:DialogNodeStructure = this.dialogList.last();
+        
+        if (node == null)
         {
-            trace("already reach the end of dialog script");
+            trace("I supposeed this should not be happening, but it's the end");
             return;
         }
         
-        var content:Fast = this.defaultDialogNode.GetCurrentContent();
+        if (node.ReachTheEnd() == true)
+        {
+            trace(node.Name + " already reach the end of dialog script");
+            
+            this.dialogList.remove(node);
+            
+            return;
+        }
         
-        this._dialogManager.ProcessMainDialogData(content, this.DoDialogProcess);
+        var content:Fast = node.GetCurrentContent();
         
-        this.defaultDialogNode.CurrentIndex++;
+        this._dialogManager.ProcessContentDialogData(content, this.DoDialogProcess);
+        
+        node.CurrentIndex++;
         //currentIndex++;
     }
-    
+
+    //dialogList store all the dialog node we're currently using, once it's empty, it's mean all the dialogs are done.
+    private var dialogList:List<DialogNodeStructure>;
     private var defaultDialogNode:DialogNodeStructure;
     private var dialogNodes:Array<DialogNodeStructure> = new Array<DialogNodeStructure>();
     

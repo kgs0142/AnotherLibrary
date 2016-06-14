@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<data name="firstStage_MainDialog">
+<data name="FirstStage_MainDialog">
     
     <inject name="test_inject_01"/>
 
@@ -10,32 +10,58 @@
 
     <content drama="acting_001" />
 
-    <content choice="first_choices" />
+    <!-- <content choice="first_choices" /> -->
+    <content goto="initial_choice_dialog" />
 
-    <content text="This dialog showing after you exit the choice" head="player_talk_01" />
-
+    <content text="This dialog showing after you exit the choices" head="player_talk_01" />
 
     <!-- Choice -->
-    <choice name="first_choices" title="The First Choice" initial="test_chat_block_01">
-        <item text="Go back to head and hear again" goto="test_chat_block_01" />
-        <item text="Choice B" goto="test_chat_block_02" once="true"/>
-        <item text="Choice C" goto="test_chat_block_03" leave="true"/>
+    <choice name="first_choices" title="The First Choice">
+        <item text="What?" goto="initial_choice_dialog" />
+        <item text="I wanna eat" goto="eat_choice_dialog" once="true"/>
+        <item text="I wanna play" goto="play_choice_dialog" />
+        <item text="I'm done here" goto="leave_choice_dialog" leave="true"/>
+    </choice>
+
+    <choice name="eat_choices" title="What do you want to eat?">
+        <item text="An apple" goto="eat_choice_final_dialog">
+            <param type="string" value="apple"/>
+        </item>
+        <item text="A banana" goto="eat_choice_final_dialog">
+            <param type="string" value="banana"/>
+        </item>
+    </choice>
+
+    <choice name="play_choice_dialog" title="What do you want to play?">
+        <item text="A game" goto="play_choice_final_dialog" />
+        <item text="A ball" goto="play_choice_final_dialog" />
     </choice>
 
     <!-- Block area -->
-    <data name="test_chat_block_01">
+    <data name="initial_choice_dialog">
         <content text="This is the head of this testing choices." />
         <content text="Saying something balabala." />
+        <content choice="first_choices" />
     </data>
 
-    <data name="test_chat_block_02">
-        <content text="You will only see this block once" />
+    <data name="eat_choice_dialog">
+        <content text="Ok then." />
+        <content text="But I will only ask you once" />
+        <content choice="eat_choices" />
     </data>
 
-    <data name="test_chat_block_03">
-        <content text="'Choice C'" />
+    <data name="eat_choice_final_dialog">
+        <content text="Hm, interesting." />
+        <content choice="first_choices" />
+    </data>
+
+    <data name="play_choice_final_dialog">
+        <content text="That sounds interesting." />
+        <content choice="first_choices" />
+    </data>
+
+    <data name="leave_choice_dialog">
         <inject name="test_inject_02"/>
+        <content text="OK, you may now leave" />
     </data>
-
-
 </data>
