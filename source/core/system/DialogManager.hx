@@ -1,5 +1,9 @@
 package core.system;
 
+import core.define.Defines;
+import core.misc.CustomInterp;
+import core.structure.ChoiceStructure;
+import core.structure.DialogNodeStructure;
 import core.ui.UIDialogText;
 import flash.display3D.textures.Texture;
 import flixel.addons.ui.FlxUI;
@@ -10,6 +14,8 @@ import flixel.addons.ui.U;
 import flixel.FlxG;
 import flixel.FlxObject;
 import haxe.xml.Fast;
+
+using core.util.CustomExtension;
 
 @:enum
 abstract MainDialogType(Int)
@@ -71,6 +77,15 @@ class DialogManager extends FlxObject
     
     //----------------------------------------------------------------------------------
     
+    //Drama
+    private var _interpDrama:CustomInterp;
+        
+    //Datas
+    private var _dialogList:List<DialogNodeStructure>;
+    private var _defaultDialogNode:DialogNodeStructure;
+    private var _dialogNodeDatas:Array<DialogNodeStructure> = new Array<DialogNodeStructure>();
+    //----------------------------------------------------------------------------------
+    
     public function new() 
     {
         super();
@@ -99,7 +114,161 @@ class DialogManager extends FlxObject
         
         //remove all the elements.
         this.RemoveAllElements();
+        
+        //Drama initial
+        this._interpDrama = new CustomInterp();
+        this._interpDrama.CommonInitial();
+        this._interpDrama.variables.set("this", this);
     }
+    
+    //The first and main logic to push this system forward.
+    public function DoDialogProcess() : Void 
+    {
+        var node:DialogNodeStructure = this._dialogList.last();
+        
+        if (node == null)
+        {
+            trace("I supposeed this should not be happening, but it's the end");
+            return;
+        }
+        
+        if (node.ReachTheEnd() == true)
+        {
+            trace(node.Name + " already reach the end of dialog script");
+            
+            this._dialogList.remove(node);
+            
+            this.DoDialogProcess();
+            
+            return;
+        }
+        
+        var content:Fast = node.GetCurrentContent();
+        node.CurrentIndex++;
+
+        //start running
+        this.ProcessContentDialogData(content);
+    }
+    
+    @:access(Xml)
+    private function ProcessContentDialogData(content:Fast):Void 
+    {
+        //make sure what the functions this content want to do first, there are priority.
+        var contentType:DialogContentType = DialogContentType.REGULAR_DIALOG;
+        contentType = content.has.drama ? DialogContentType.DRAMA : contentType;
+        contentType = content.has.choice ? DialogContentType.CHOICE : contentType;
+        contentType = content.has.goto ? DialogContentType.GOTO : contentType;
+        
+        //then decide what to do.
+        switch (contentType) 
+        {
+            case DialogContentType.DRAMA:
+                this.DoDramaProcess(content);
+                return;
+            
+            case DialogContentType.GOTO:
+                this.DoGotoProcess(content);
+                return;
+            default:
+                
+        }
+        
+        //--------
+        
+        var name:String = U.xml_str(content.x, "name");
+        var title:String = U.xml_str(content.x, "title");
+        var headPicAnim:String = U.xml_str(content.x, "head");
+        var speaker:String = U.xml_str(content.x, "speaker");
+        
+        //decide the region for DialogText.
+        var region:FlxUIRegion = this._mainDtTxtWOHTRegion;
+        if (title != "" && headPicAnim != "")
+        {
+            region = this._mainDtTxtWHTRegion;
+        }
+        else if (title != "")
+        {
+            region = this._mainDtTxtWTRegion;
+        }
+        else if (headPicAnim != "")
+        {
+            region = this._mainDtTxtWHRegion;
+        }
+        
+        //Add UI elements
+        this.AddUIElements(title, headPicAnim, speaker);
+        
+        //UIDialogText
+        this._mainDt.SetDefaultSetting();
+        this._mainDt.SetData(region, content);
+        this._ui.add(_mainDt);
+        
+        this._mainDt.start(0.1, false, false, null, function ():Void 
+        {
+            this.RemoveAllElements();
+            
+            this.DoDialogProcess();
+            //completeCallback();
+        });
+    }
+    
+    public function SetMainDialog(type:MainDialogType = MainDialogType.WO_HEAD_TITLE) : Void 
+    {
+        
+    }
+    
+    //{ Goto functions
+    private function DoGotoProcess(content:Fast) : Void 
+    {
+        var nodeName:String = U.xml_str(content.x, "goto");
+        
+        for (data in this._dialogNodeDatas)
+        {
+            if (data.Name == nodeName)
+            {
+                trace("Found node: " + nodeName);
+                
+                this._dialogList.add(data.Clone());
+                
+                this.DoDialogProcess();
+                
+                return;
+            }
+        }
+        
+        trace("Cannot fund the node: " + nodeName);
+    }
+    //}
+    
+    //{ Drama functions
+    private function DoDramaProcess(content:Fast) : Void 
+    {
+        var scriptName:String = U.xml_str(content.x, "drama");
+        var pathId:String = Defines.ASSETS_DRAMA_DIALOG_PATH + scriptName;
+        
+        #if WIP
+        var force:Bool = true;
+        #else
+        var force:Bool = false;
+        #end
+        
+        var callback:Void->Void = function ():Void 
+        {
+            var GetParsedScript:String->Dynamic = HScriptManager.Get().GetParsedScript;
+            
+            _interpDrama.execute(GetParsedScript(pathId));
+            
+            _interpDrama.variables.get("PlayDrama")();
+            
+            //once the drama is complete, it will call the DoDialogProcess from the hscript.
+        }
+        
+        //Load
+        HScriptManager.Get().LoadHScript(pathId, force, callback);
+    }
+    
+    //}
+    
     
     //{ Functions not so importants
     private function GetInitialAssets():Void 
@@ -167,58 +336,117 @@ class DialogManager extends FlxObject
     }
     
     //}
-    
-	@:access(Xml)
-    public function ProcessContentDialogData(content:Fast, completeCallback:Void->Void):Void 
+        
+    //{ Not very important functions
+    public function LoadDialogProcess(xmlName:String) : Void 
     {
-        //make sure what the functions this content want to do first, there are priority.
-        var contentType:DialogContentType = DialogContentType.REGULAR_DIALOG;
-        contentType = content.has.drama ? DialogContentType.DRAMA : contentType;
-        contentType = content.has.choice ? DialogContentType.CHOICE : contentType;
-        contentType = content.has.goto ? DialogContentType.GOTO : contentType;
+        var fast:haxe.xml.Fast;
         
-        //then decide what to do.
+        #if (debug && sys)
+        var directory:String = haxe.io.Path.directory(Sys.executablePath());
+        var path:String = directory + "/" + Defines.ASSETS_DIALOG_PATH;
+        path = flixel.addons.ui.U.fixSlash(path);
+    
+        fast = U.readFast(U.fixSlash(path + xmlName + ".xml"));
+
+		#else
+        fast = flixel.addons.ui.U.xml(xmlName, "xml", true, Defines.ASSETS_DIALOG_PATH);
+		#end
         
-        //--------
+        //Dialog nodes
+        this._dialogList = new List<DialogNodeStructure>();
+        this._defaultDialogNode = new DialogNodeStructure();
+        this._dialogList.add(_defaultDialogNode);
         
-        var name:String = U.xml_str(content.x, "name");
-        var title:String = U.xml_str(content.x, "title");
-        var headPicAnim:String = U.xml_str(content.x, "head");
-        var speaker:String = U.xml_str(content.x, "speaker");
-        
-        //decide the region for DialogText.
-        var region:FlxUIRegion = this._mainDtTxtWOHTRegion;
-        if (title != "" && headPicAnim != "")
-        {
-            region = this._mainDtTxtWHTRegion;
-        }
-        else if (title != "")
-        {
-            region = this._mainDtTxtWTRegion;
-        }
-        else if (headPicAnim != "")
-        {
-            region = this._mainDtTxtWHRegion;
-        }
-        
-        //Add UI elements
-        this.AddUIElements(title, headPicAnim, speaker);
-        
-        //UIDialogText
-        this._mainDt.SetDefaultSetting();
-        this._mainDt.SetData(region, content);
-        this._ui.add(_mainDt);
-        
-        this._mainDt.start(0.1, false, false, null, function ():Void 
-        {
-            this.RemoveAllElements();
-            
-            completeCallback();
-        });
+        //Load xml file
+        this.LoadDialogXml(fast, xmlName, _defaultDialogNode);
     }
     
-    public function SetMainDialog(type:MainDialogType = MainDialogType.WO_HEAD_TITLE) : Void 
+    @:access(Xml)
+    private function LoadDialogXml(data:Fast, xmlName:String, dialogNode:DialogNodeStructure) : Void
     {
+        //set name, this is *IMPORTANT*
+        dialogNode.Name = U.xml_name(data.x);
         
+        //First, doing the inject processing
+        if (data.hasNode.inject)
+        {
+            while(data.hasNode.inject == true)
+            {
+                var inj_data = data.node.inject;
+                var inj_name:String = U.xml_name(inj_data.x);
+                var payload:Xml = U.xml(inj_name, "xml", false, Defines.ASSETS_INJECT_DIALOG_PATH + xmlName + "/");
+                if (payload != null)
+                {
+                    var parent = inj_data.x.parent;
+                    var i:Int = 0;
+                    for (child in parent.children)
+                    {
+                        if (child == inj_data.x)
+                        {
+                            break;
+                        }
+                        i++;
+                    }
+                    
+                    if (parent.removeChild(inj_data.x))
+                    {
+                        var j:Int = 0;
+                        for (e in payload.elements())
+                        {
+                            parent.insertChild(e, i + j);
+                            j++;
+                        }
+                    }
+                }
+            }
+        }
+        
+        //process "content"
+        if (data.hasNode.content)
+        {
+            for (content in data.nodes.content)
+            {
+                dialogNode.ContentList.push(content);
+                //contentList.push(content);
+            }
+        }
+        
+        //process "choice"
+        if (data.hasNode.choice)
+        {
+            for (choiceData in data.nodes.choice)
+            {
+                var choice:ChoiceStructure = new ChoiceStructure();
+                dialogNode.ChoiceList.push(choice);
+                
+                //choiceList.push(choice);
+                
+                choice.rootData = choiceData;
+                if (choiceData.hasNode.item)
+                {
+                    for (item in choiceData.nodes.item)
+                    {
+                        choice.items.push(item);
+                    }
+                }
+            }
+        }
+        
+        //process "data", working like a node, leaf in a tree, but not exactly
+        if (data.hasNode.data)
+        {
+            for (blockData in data.nodes.data)
+            {
+                var node:DialogNodeStructure = new DialogNodeStructure();
+                _dialogNodeDatas.push(node);
+                
+                //recursion
+                this.LoadDialogXml(blockData, xmlName, node);
+            }
+        }
     }
+    
+    //}
+    
 }

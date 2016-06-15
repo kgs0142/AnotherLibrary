@@ -8,9 +8,11 @@
     <content text="Second, both head pic and title " head="player_talk_01" title="test title" speaker="System"/>
     <content text="Third, only head" head="player_talk_01" />
 
-    <content drama="acting_001" />
+    <!-- playing some "drama" -->
+    <content drama="acting_001.hs" />
 
     <!-- <content choice="first_choices" /> -->
+    <!-- "goto" block's name-->
     <content goto="initial_choice_dialog" />
 
     <content text="This dialog showing after you exit the choices" head="player_talk_01" />

@@ -69,19 +69,32 @@ class HScriptManager
     
     private function StartLoad():Void 
     {
+        var singleLoadComplete:Void->Void = function ():Void 
+        {
+            this.m_uiAccuCount++;
+
+            if (this.m_uiAccuCount == this.m_uiTotalCount)
+            {
+                trace("Load complete: " + this.m_uiAccuCount + "/" + this.m_uiTotalCount);
+                
+                if (this.m_funcLoadComplete != null)
+                {
+                    this.m_funcLoadComplete();
+                }
+            }
+        }
+        
         for (unit in this.m_LoadQueue) 
         {
-            this.LoadHScript(unit.PathId, unit.Force);
+            this.LoadHScript(unit.PathId, unit.Force, singleLoadComplete);
         }
     }
     
-    private function LoadHScript(pathId:String, force:Bool):Void 
+    public function LoadHScript(pathId:String, force:Bool, singleLoadComplete:Void->Void = null):Void 
     {
         var callback:String->Void = function (script:String):Void 
         {
-            this.m_uiAccuCount++;
-            
-            //trace("Load complete:" + pathId);
+            //trace("Single load complete:" + pathId);
 
             //Parsing string script.
             try 
@@ -93,14 +106,9 @@ class HScriptManager
                 FlxG.log.add(err.name + ": " + err.message);
             }
             
-            if (this.m_uiAccuCount == this.m_uiTotalCount)
+            if (singleLoadComplete != null)
             {
-                trace("Load complete: " + this.m_uiAccuCount + "/" + this.m_uiTotalCount);
-                
-                if (this.m_funcLoadComplete != null)
-                {
-                    this.m_funcLoadComplete();
-                }
+                singleLoadComplete();
             }
         }
         
