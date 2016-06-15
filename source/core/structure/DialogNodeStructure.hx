@@ -21,11 +21,11 @@ class DialogNodeStructure
     private function get_CurrentIndex():Int	 		        { return _currentIndex; }
     private function set_CurrentIndex(i:Int):Int 	        { return _currentIndex = i; }
     
-    public var ContentList(get, null):Array<Fast>;
+    public var ContentList(get, set):Array<Fast>;
     private function get_ContentList():Array<Fast>          { return _contentList; }
     private function set_ContentList(i:Array<Fast>):Array<Fast> 	    { return _contentList = i; }
     
-    public var ChoiceList(get, null):Array<ChoiceStructure>;
+    public var ChoiceList(get, set):Array<ChoiceStructure>;
     private function get_ChoiceList():Array<ChoiceStructure> { return _choiceList; }
     private function set_ChoiceList(i:Array<ChoiceStructure>):Array<ChoiceStructure> 	    { return _choiceList = i; }
     
