@@ -4,6 +4,7 @@ import core.define.Defines;
 import core.misc.CustomInterp;
 import core.structure.ChoiceStructure;
 import core.structure.DialogNodeStructure;
+import core.ui.UIChoiceDialogSubState;
 import core.ui.UIDialogText;
 import flash.display3D.textures.Texture;
 import flixel.addons.ui.FlxUI;
@@ -52,6 +53,8 @@ class DialogManager extends FlxObject
     private static inline var DT_TXT_WO_HEAD_TITLE_NAME:String = "dt_text_wo_head_title"; 
     private static inline var FLOAT_DT_BG_NAME:String = "float_dt_bg"; 
 
+    private static var ms_Instance:DialogManager;
+    
     //
     private var _ui:FlxUI;
     
@@ -83,12 +86,16 @@ class DialogManager extends FlxObject
     //Datas
     private var _dialogList:List<DialogNodeStructure>;
     private var _defaultDialogNode:DialogNodeStructure;
-    private var _dialogNodeDatas:Array<DialogNodeStructure> = new Array<DialogNodeStructure>();
+    private var _choiceDatas:Array<ChoiceStructure>;
+    private var _dialogNodeDatas:Array<DialogNodeStructure>;
     //----------------------------------------------------------------------------------
     
-    public function new() 
+    private function new() 
     {
         super();
+        
+        this._choiceDatas = new Array<ChoiceStructure>();
+        this._dialogNodeDatas  = new Array<DialogNodeStructure>();
     }
     
     override public function destroy():Void 
@@ -98,6 +105,8 @@ class DialogManager extends FlxObject
         //this.RemoveAllElements();
         
         this.ClearAllElements();
+        
+        ms_Instance = null;
     }
     
     public function Initial(ui:FlxUI) : Void 
@@ -122,13 +131,18 @@ class DialogManager extends FlxObject
     }
     
     //The first and main logic to push this system forward.
-    public function DoDialogProcess() : Void 
+    public function DoNextDialogProcess() : Void 
     {
         var node:DialogNodeStructure = this._dialogList.last();
         
         if (node == null)
         {
             trace("I supposeed this should not be happening, but it's the end");
+            
+            this.RemoveAllElements();
+            
+            //Call dialog thread complete callback.
+            
             return;
         }
         
@@ -138,7 +152,7 @@ class DialogManager extends FlxObject
             
             this._dialogList.remove(node);
             
-            this.DoDialogProcess();
+            this.DoNextDialogProcess();
             
             return;
         }
@@ -169,11 +183,14 @@ class DialogManager extends FlxObject
             case DialogContentType.GOTO:
                 this.DoGotoProcess(content);
                 return;
-            default:
                 
+            case DialogContentType.CHOICE:
+                this.DoChoiceProcess(content);
+                return;
+                
+            default:
         }
-        
-        //--------
+        //-------------------------------------------------
         
         var name:String = U.xml_str(content.x, "name");
         var title:String = U.xml_str(content.x, "title");
@@ -186,13 +203,13 @@ class DialogManager extends FlxObject
         {
             region = this._mainDtTxtWHTRegion;
         }
-        else if (title != "")
-        {
-            region = this._mainDtTxtWTRegion;
-        }
         else if (headPicAnim != "")
         {
             region = this._mainDtTxtWHRegion;
+        }
+        else if (title != "" || speaker != "")
+        {
+            region = this._mainDtTxtWTRegion;
         }
         
         //Add UI elements
@@ -207,7 +224,7 @@ class DialogManager extends FlxObject
         {
             this.RemoveAllElements();
             
-            this.DoDialogProcess();
+            this.DoNextDialogProcess();
             //completeCallback();
         });
     }
@@ -216,6 +233,54 @@ class DialogManager extends FlxObject
     {
         
     }
+    
+    //{ Choice functions
+    private function DoChoiceProcess(content:Fast) : Void 
+    {
+        var choiceName:String = U.xml_str(content.x, "choice");
+        
+        var choiceData:ChoiceStructure = this.GetChoiceData(choiceName);
+        
+        if (choiceData == null)
+        {
+            trace("choiceData is null.");
+            
+            this.DoNextDialogProcess();
+            
+            return;
+        }
+        
+        var uiChoiceSubState:UIChoiceDialogSubState = new UIChoiceDialogSubState();
+        uiChoiceSubState.create();
+        
+        var result:Bool = FlxSubStateManager.Get().OpenSubState(uiChoiceSubState);
+        if (result == false)
+        {
+            trace("OpenSubState failed.");
+            uiChoiceSubState.destroy();
+            uiChoiceSubState = null;
+            
+            this.DoNextDialogProcess();
+            
+            return;
+        }
+        
+        var clickCallback:Int->Array<Dynamic>->Void = function (index:Int, params:Array<Dynamic>) : Void 
+        {
+            trace("ClickChoiceHandler: " + index + ", " + params);
+            
+            FlxSubStateManager.Get().CloseSubState(uiChoiceSubState);
+            
+            //let try some simple way first, shall we?
+            var itemData:Fast = choiceData.items[index];
+            
+            this.DoGotoProcess(itemData);
+        };
+        
+        uiChoiceSubState.ShowChoices(choiceData, clickCallback);
+    }
+    
+    //}
     
     //{ Goto functions
     private function DoGotoProcess(content:Fast) : Void 
@@ -230,7 +295,7 @@ class DialogManager extends FlxObject
                 
                 this._dialogList.add(data.Clone());
                 
-                this.DoDialogProcess();
+                this.DoNextDialogProcess();
                 
                 return;
             }
@@ -311,6 +376,8 @@ class DialogManager extends FlxObject
     
     private function RemoveAllElements():Void 
     {
+        if (_mainDt != null) this._ui.remove(_mainDt);
+        
         if (_floatDtBg != null) this._ui.remove(_floatDtBg);
         if (_mainDtBg != null) this._ui.remove(_mainDtBg);
         if (_mainDtNameText != null) this._ui.remove(_mainDtNameText);
@@ -324,6 +391,8 @@ class DialogManager extends FlxObject
     
     private function ClearAllElements():Void 
     {
+        _mainDt = null;
+        
         _floatDtBg = null;
         _mainDtBg = null;
         _mainDtNameText = null;
@@ -333,6 +402,31 @@ class DialogManager extends FlxObject
         _mainDtTxtWHRegion = null;
         _mainDtTxtWTRegion = null;
         _mainDtTxtWOHTRegion = null;
+    }
+    
+    private function GetChoiceData(choiceName:String) : ChoiceStructure 
+    {
+        for (data in this._choiceDatas)
+        {
+            if (data.name == choiceName)
+            {
+                return data;
+            }
+        }
+        
+        return null;
+    }
+    
+    public static function Get() : DialogManager
+    {
+        if (ms_Instance == null)
+        {
+            ms_Instance = new DialogManager();
+            
+            FlxG.state.add(ms_Instance);
+        }
+        
+        return ms_Instance;
     }
     
     //}
@@ -418,11 +512,9 @@ class DialogManager extends FlxObject
             for (choiceData in data.nodes.choice)
             {
                 var choice:ChoiceStructure = new ChoiceStructure();
-                dialogNode.ChoiceList.push(choice);
-                
                 //choiceList.push(choice);
-                
                 choice.rootData = choiceData;
+                choice.name = U.xml_name(choiceData.x);
                 if (choiceData.hasNode.item)
                 {
                     for (item in choiceData.nodes.item)
@@ -430,6 +522,8 @@ class DialogManager extends FlxObject
                         choice.items.push(item);
                     }
                 }
+                
+                this._choiceDatas.push(choice);
             }
         }
         

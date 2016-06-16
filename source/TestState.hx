@@ -15,8 +15,6 @@ import haxe.xml.Fast;
  */
 class TestState extends FlxUIState
 {
-    private var _dialogManager:DialogManager;
-    
     public function new() 
     {
         super();
@@ -31,9 +29,7 @@ class TestState extends FlxUIState
         
         trace(this._ui);
         
-        this._dialogManager = new DialogManager();
-        this._dialogManager.Initial(this._ui);
-        this.add(this._dialogManager);
+        DialogManager.Get().Initial(this._ui);
         
         //some test--------------------------------------------------------------------------
         //var dt:UIDialogText = new UIDialogText(0, 50, 200, "TestTestTestTest,TestTestTestTest");
@@ -54,9 +50,9 @@ class TestState extends FlxUIState
         //return;
         
         //load dialog xml files for testing-------------------------------------
-        this._dialogManager.LoadDialogProcess("testChat");
+        DialogManager.Get().LoadDialogProcess("testChat");
         
-        this._dialogManager.DoDialogProcess();
+        DialogManager.Get().DoNextDialogProcess();
 	}
     
     private function DoXmlIdPreProcess(xmlId:String)

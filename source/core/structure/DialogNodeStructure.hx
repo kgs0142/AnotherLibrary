@@ -25,15 +25,10 @@ class DialogNodeStructure
     private function get_ContentList():Array<Fast>          { return _contentList; }
     private function set_ContentList(i:Array<Fast>):Array<Fast> 	    { return _contentList = i; }
     
-    public var ChoiceList(get, set):Array<ChoiceStructure>;
-    private function get_ChoiceList():Array<ChoiceStructure> { return _choiceList; }
-    private function set_ChoiceList(i:Array<ChoiceStructure>):Array<ChoiceStructure> 	    { return _choiceList = i; }
-    
     public function new() 
     {
         this._currentIndex = 0;
         this._contentList = new Array<Fast>();
-        this._choiceList = new Array<ChoiceStructure>();
     }
     
     public function GetCurrentContent() : Fast
@@ -56,7 +51,6 @@ class DialogNodeStructure
         var node:DialogNodeStructure = new DialogNodeStructure();
         node.Name = this.Name;
         node.ContentList = this._contentList.copy();
-        node.ChoiceList = this._choiceList.copy();
         
         return node;
     }

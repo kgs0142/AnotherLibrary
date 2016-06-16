@@ -37,6 +37,13 @@ class UIChoiceDialogSubState extends FlxUISubState
 	 */
 	override public function create():Void
 	{
+        //A tricky way to avoid call create multiple times
+        if (this._ui != null)
+        {
+            return;
+        }
+        //-------------------------------------------------------
+        
         this._buttons = new Array<FlxUIButton>();
         
         this.DoXmlIdPreProcess("_ui_choice_dialog");
@@ -51,6 +58,7 @@ class UIChoiceDialogSubState extends FlxUISubState
         this._buttons.push(cast this._ui.getAsset("button_0"));
         this._buttons.push(cast this._ui.getAsset("button_1"));
         this._buttons.push(cast this._ui.getAsset("button_2"));
+        this._buttons.push(cast this._ui.getAsset("button_3"));
         
         this.CleanAllElements();
 	}
@@ -105,6 +113,7 @@ class UIChoiceDialogSubState extends FlxUISubState
 	@:access(Xml)
     public function ShowChoices(choiceData:ChoiceStructure, clickCallback:Int->Array<Dynamic>->Void):Void 
     {
+        this._choiceData = choiceData;
         this._clickChoiceCallback = clickCallback;
         
         var title:String = UIUtil.xml_str(choiceData.rootData.x, "title");

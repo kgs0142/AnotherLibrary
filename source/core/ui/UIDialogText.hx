@@ -152,7 +152,9 @@ class UIDialogText extends FlxTypeText
     {
         this.x = region.x;
         this.y = region.y;
-        this.width = region.width;
+        //Silly
+        //this.width = region.width;
+        this.fieldWidth = region.width;
         
         var txtContent:String = flixel.addons.ui.U.xml_str(content.x, "text");
         

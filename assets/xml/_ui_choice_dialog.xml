@@ -8,13 +8,13 @@
 	<button id="button_0" label="Thing 0" use_def="btn" x="50" y="115">
 		<param type="int" value="0"/>
 	</button>
-	<button id="button_1" label="Thing 1" use_def="btn" x="50" y="130">
+	<button id="button_1" label="Thing 1" use_def="btn" x="50" y="126">
 		<param type="int" value="1"/>
 	</button>
-	<button id="button_2" label="Thing 2" use_def="btn" x="50" y="145">
+	<button id="button_2" label="Thing 2" use_def="btn" x="50" y="137">
 		<param type="int" value="2"/>
 	</button>
-    <button id="button_3" label="Thing 3" use_def="btn" x="50" y="160">
+    <button id="button_3" label="Thing 3" use_def="btn" x="50" y="148">
         <param type="int" value="3"/>
     </button>
 
