@@ -22,7 +22,7 @@ class ScriptLoader
     
     private var m_scriptMap:Map<String, String>;
     
-    public function new() 
+    private function new() 
     {
         this.m_scriptMap = new Map<String, String>();
     }
