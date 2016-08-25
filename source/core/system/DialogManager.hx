@@ -480,15 +480,19 @@ class DialogManager extends FlxObject
                 var inj_data = data.node.inject;
                 var inj_name:String = U.xml_name(inj_data.x);
                 
+                var payload:Xml;
+                
                 var directory:String = Defines.ASSETS_INJECT_DIALOG_PATH + xmlName + "/";
                 #if (debug && sys && WIP)
                 var exePath:String = Sys.executablePath();
                 directory = haxe.io.Path.directory(exePath);
                 directory = directory + "/../../../../";
                 directory = directory + Defines.ASSETS_INJECT_DIALOG_PATH + xmlName + "/";
-                #end
-                
                 var fast:haxe.xml.Fast = U.readFast(U.fixSlash(directory + inj_name + ".xml"));
+                payload = fast.x;
+                #else
+                payload = U.xml(inj_name, "xml", false, directory);
+                #end
                 
                 //var payload:Xml = U.xml(inj_name, "xml", false, directory);
                 var payload:Xml = fast.x;
