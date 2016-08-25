@@ -437,7 +437,17 @@ class DialogManager extends FlxObject
         var fast:haxe.xml.Fast;
         
         #if (debug && sys)
-        var directory:String = haxe.io.Path.directory(Sys.executablePath());
+        var exePath:String = Sys.executablePath();
+        var directory:String = haxe.io.Path.directory(exePath);
+        
+        //THIS IS TRICKY, but this do save some troubles for me...
+        //I swaer to god I will fix this once I have the better way to get folder path of "project/assets"
+        #if WIP
+        var postfix = "/../../../../";
+        directory = directory + postfix;
+        #end
+        
+        //var directory:String = haxe.io.Path.directory(Sys.executablePath());
         var path:String = directory + "/" + Defines.ASSETS_DIALOG_PATH;
         path = flixel.addons.ui.U.fixSlash(path);
     

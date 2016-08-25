@@ -65,6 +65,11 @@ class TestState extends FlxUIState
         
         if (directory != null)
         {
+            #if WIP
+            var postfix = "/../../../..";
+            directory = directory + postfix;
+            #end
+        
             this._liveFilePath = directory + "/" + Defines.ASSETS_XML_PATH;
 
             this._liveFilePath = flixel.addons.ui.U.fixSlash(_liveFilePath);
