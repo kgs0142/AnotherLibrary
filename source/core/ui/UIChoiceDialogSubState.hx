@@ -1,5 +1,6 @@
 package core.ui;
 
+import core.define.Defines;
 import core.structure.ChoiceStructure;
 import flixel.addons.ui.FlxBaseMultiInput;
 import flixel.addons.ui.FlxMultiKey;
@@ -120,8 +121,7 @@ class UIChoiceDialogSubState extends FlxUISubState
         trace("Choice title: " + title);
         
         //Add elements
-        this.add(cursor);
-        
+        this.CleanAllElements();
         for (i in 0 ... choiceData.items.length)
         {
             if (i >= this._buttons.length)
@@ -136,6 +136,12 @@ class UIChoiceDialogSubState extends FlxUISubState
             
             this._ui.add(button);
         }
+        
+        //
+        cursor.clearWidgets();
+        cursor.addWidgetsFromUI(_ui);
+        cursor.findVisibleLocation(0);
+        this.add(cursor);
     }
     
     //{ Not very important functions
@@ -169,17 +175,17 @@ class UIChoiceDialogSubState extends FlxUISubState
     {
         this._xml_id = xmlId;
 
-        #if (debug && sys)
-        var directory:String = haxe.io.Path.directory(Sys.executablePath());
-        if (directory != null)
-        {
-            this._liveFilePath = directory + "/" + Defines.ASSETS_XML_PATH;
-
-            this._liveFilePath = flixel.addons.ui.U.fixSlash(_liveFilePath);
-            
-            this._xml_id = xmlId + ".xml";
-        }
-        #end
+        //#if (debug && sys)
+        //var directory:String = haxe.io.Path.directory(Sys.executablePath());
+        //if (directory != null)
+        //{
+            //this._liveFilePath = directory + "/" + Defines.ASSETS_XML_PATH;
+//
+            //this._liveFilePath = flixel.addons.ui.U.fixSlash(_liveFilePath);
+            //
+            //this._xml_id = xmlId + ".xml";
+        //}
+        //#end
     }
     
     //Copied from FlxUI

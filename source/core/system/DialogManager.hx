@@ -14,6 +14,7 @@ import flixel.addons.ui.FlxUIText;
 import flixel.addons.ui.U;
 import flixel.FlxG;
 import flixel.FlxObject;
+import flixel.util.FlxColor;
 import haxe.xml.Fast;
 
 using core.util.CustomExtension;
@@ -34,6 +35,8 @@ abstract DialogContentType(Int)
     var DRAMA = 1;
     var CHOICE = 2;
     var GOTO = 3;
+    var LEAVE = 4;
+    var SCRIPT = 5;
 }
 
 /**
@@ -76,6 +79,10 @@ class DialogManager extends FlxObject
     private var _mainDtTxtWTRegion:FlxUIRegion;
     private var _mainDtTxtWOHTRegion:FlxUIRegion;
     
+    //{ Lots of default setting, WIP
+    private var _mainDtNameTextColor:FlxColor;
+    //}
+    
     //TODO: Dialog Choices here
     
     //----------------------------------------------------------------------------------
@@ -83,6 +90,10 @@ class DialogManager extends FlxObject
     //Drama
     private var _interpDrama:CustomInterp;
         
+    //Script
+    private var _interpScript:CustomInterp;
+
+    
     //Datas
     private var _dialogList:List<DialogNodeStructure>;
     private var _defaultDialogNode:DialogNodeStructure;
@@ -90,10 +101,11 @@ class DialogManager extends FlxObject
     private var _dialogNodeDatas:Array<DialogNodeStructure>;
     //----------------------------------------------------------------------------------
     
+    
     private function new() 
     {
         super();
-        
+                
         this._choiceDatas = new Array<ChoiceStructure>();
         this._dialogNodeDatas  = new Array<DialogNodeStructure>();
     }
@@ -128,6 +140,14 @@ class DialogManager extends FlxObject
         this._interpDrama = new CustomInterp();
         this._interpDrama.CommonInitial();
         this._interpDrama.variables.set("this", this);
+        
+        //Script Initial
+        this._interpScript = new CustomInterp();
+        this._interpScript.CommonInitial();
+        this._interpScript.variables.set("this", this);
+        
+        var GetParsedScript:String->Dynamic = HScriptManager.Get().GetParsedScript;
+        this._interpScript.execute(GetParsedScript(AssetPaths.dialogManager__hs));
     }
     
     //The first and main logic to push this system forward.
@@ -169,6 +189,8 @@ class DialogManager extends FlxObject
     {
         //make sure what the functions this content want to do first, there are priority.
         var contentType:DialogContentType = DialogContentType.REGULAR_DIALOG;
+        contentType = content.has.leave ? DialogContentType.LEAVE : contentType;
+        contentType = content.has.script ? DialogContentType.SCRIPT : contentType;
         contentType = content.has.drama ? DialogContentType.DRAMA : contentType;
         contentType = content.has.choice ? DialogContentType.CHOICE : contentType;
         contentType = content.has.goto ? DialogContentType.GOTO : contentType;
@@ -186,6 +208,14 @@ class DialogManager extends FlxObject
                 
             case DialogContentType.CHOICE:
                 this.DoChoiceProcess(content);
+                return;
+                
+            case DialogContentType.SCRIPT:
+                this.DoScriptProcess(content);
+                return;
+                
+            case DialogContentType.LEAVE:
+                //Do nothing, break this dialog from the current node.
                 return;
                 
             default:
@@ -214,13 +244,15 @@ class DialogManager extends FlxObject
         
         //Add UI elements
         this.AddUIElements(title, headPicAnim, speaker);
+        this.SetDefaultSetting();
+        this.SetUIDescription(content);
         
         //UIDialogText
         this._mainDt.SetDefaultSetting();
         this._mainDt.SetData(region, content);
         this._ui.add(_mainDt);
         
-        this._mainDt.start(0.1, false, false, null, function ():Void 
+        this._mainDt.start(null, false, false, null, function ():Void 
         {
             this.RemoveAllElements();
             
@@ -229,10 +261,26 @@ class DialogManager extends FlxObject
         });
     }
     
-    public function SetMainDialog(type:MainDialogType = MainDialogType.WO_HEAD_TITLE) : Void 
+    //public function SetMainDialog(type:MainDialogType = MainDialogType.WO_HEAD_TITLE) : Void 
+    //{
+        //
+    //}
+    
+    //{ Set some UI description
+    private function SetUIDescription(content:Fast):Void 
     {
-        
+        var speakerColor:String = flixel.addons.ui.U.xml_str(content.x, "speaker_color");
+        if (speakerColor != "")
+        {
+            this._mainDtNameText.color = FlxColor.fromString(speakerColor);
+        }
     }
+    
+    private function SetDefaultSetting():Void 
+    {
+        this._mainDtNameText.color = this._mainDtNameTextColor;
+    }
+    //}
     
     //{ Choice functions
     private function DoChoiceProcess(content:Fast) : Void 
@@ -305,6 +353,22 @@ class DialogManager extends FlxObject
     }
     //}
     
+    //{ Script functions
+    private function DoScriptProcess(content:Fast) : Void 
+    {
+        var funcName:String = U.xml_str(content.x, "script");
+        this._interpScript.variables.get(funcName)();
+        
+        this.DoNextDialogProcess();
+    }
+    
+    public function SetScriptVariable(name:String, variable:Dynamic):Void 
+    {
+        this._interpScript.variables.set(name, variable);
+    }
+    
+    //}
+    
     //{ Drama functions
     private function DoDramaProcess(content:Fast) : Void 
     {
@@ -334,7 +398,6 @@ class DialogManager extends FlxObject
     
     //}
     
-    
     //{ Functions not so importants
     private function GetInitialAssets():Void 
     {
@@ -350,6 +413,9 @@ class DialogManager extends FlxObject
         this._mainDtTxtWHRegion = cast this._ui.getAsset(DT_TXT_W_HEAD_NAME);
         this._mainDtTxtWTRegion = cast this._ui.getAsset(DT_TXT_W_TITLE_NAME);
         this._mainDtTxtWOHTRegion = cast this._ui.getAsset(DT_TXT_WO_HEAD_TITLE_NAME);
+        
+        //Set initial settings
+        this._mainDtNameTextColor = this._mainDtNameText.color;
     }
     
     private function AddUIElements(title:String, headPicAnim:String, speaker:String):Void 
@@ -495,7 +561,6 @@ class DialogManager extends FlxObject
                 #end
                 
                 //var payload:Xml = U.xml(inj_name, "xml", false, directory);
-                var payload:Xml = fast.x;
                 if (payload != null)
                 {
                     var parent = inj_data.x.parent;

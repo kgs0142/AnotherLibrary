@@ -1,11 +1,13 @@
 package core.ui;
 
+import core.define.Defines;
 import flash.media.Sound;
 import flixel.addons.text.FlxTypeText;
 import flixel.addons.ui.FlxUIRegion;
 import flixel.FlxG;
 import flixel.input.keyboard.FlxKey;
 import flixel.system.FlxAssets;
+import haxe.Constraints.FlatEnum;
 import haxe.xml.Fast;
 
 using core.util.CustomExtension;
@@ -35,12 +37,15 @@ class UIDialogText extends FlxTypeText
     private var m_funcCompleteCallback:Void->Void;
     private var m_bTypeComplete:Bool;
     
+    private var m_bSysAutoConfirm:Bool;
+    
     public function new(X:Float = 0, Y:Float = 0, Width:Int = 0, Text:String = "", Size:Int=8, EmbeddedFont:Bool=true) 
     {
         super(X, Y, Width, Text, Size, EmbeddedFont);
         
         this.m_DelayChars = [];
         this.m_bTypeComplete = false;
+        this.m_bSysAutoConfirm = false;
         this.m_mapDialogPos = new Map<Int, String>();
         
         this.DoCustomCodeProcessOnFinalText();
@@ -59,6 +64,20 @@ class UIDialogText extends FlxTypeText
     {
         //Custom skip and complete process-----------------------------------------------
 
+        //System auto confirm
+        if (m_bTypeComplete == true && m_bSysAutoConfirm == true)
+        {
+            if (this.m_funcCompleteCallback != null)
+            {
+                var funcTemp:Void->Void = this.m_funcCompleteCallback;
+                this.m_funcCompleteCallback = null;
+                
+                funcTemp();
+                
+                return;
+            }
+        }
+        
         #if !FLX_NO_KEYBOARD
         
         if (m_bTypeComplete == true && FlxG.keys.anyJustPressed(m_confirmKeys))
@@ -67,13 +86,16 @@ class UIDialogText extends FlxTypeText
             {
                 var funcTemp:Void->Void = this.m_funcCompleteCallback;
                 this.m_funcCompleteCallback = null;
+                
                 funcTemp();
+                
+                return;
             }
         }
         
 		#end
         
-        if (FlxG.mouse.justPressed == true)
+        if (FlxG.mouse.justPressed == true && m_bSysAutoConfirm == false)
         {
             skip();
         }
@@ -85,11 +107,13 @@ class UIDialogText extends FlxTypeText
                 var funcTemp:Void->Void = this.m_funcCompleteCallback;
                 this.m_funcCompleteCallback = null;
                 funcTemp();
+                
+                return;
+                
             }
         }
         
         //------------------------------------------------------------------------------
-        
         
         super.update(elapsed);
 
@@ -123,23 +147,28 @@ class UIDialogText extends FlxTypeText
     
     public function SetDefaultSetting() : Void 
     {
-        this.delay = 0.1;
+        this.delay = 0.05;
+        this.size = 13;
 		this.eraseDelay = 0.2;
-        this.antialiasing = false;
+        this.antialiasing = true;
 		//this.showCursor = true;
 		this.cursorBlinkSpeed = 1.0;
 		//this.prefix = "C:/HAXE/FLIXEL/";
 		//this.autoErase = true;
 		this.waitTime = 2.0;
 		this.setTypingVariation(0.75, true);
-		this.color = 0x8811EE11;
+		this.color = 0xFF359F50;
 		this.skipKeys = ["X", "SPACE"];
         this.m_confirmKeys = ["Z"];
         this.useDefaultSound = false;
+        this.m_bSysAutoConfirm = false;
         this.sounds = [FlxG.sound.load(FlxAssets.getSound(AssetPaths.defaultTypetext__ogg.ExcludeExt()))];
+        //this.sounds = [FlxG.sound.load(FlxAssets.getSound(AssetPaths.defaultTypetext__ogg.ExcludeExt())), 
+                       //FlxG.sound.load(FlxAssets.getSound(AssetPaths.Blip_Select3__ogg.ExcludeExt())),
+                       //FlxG.sound.load(FlxAssets.getSound(AssetPaths.Blip_Select4__ogg.ExcludeExt()))];
         
         //My custom parameters
-        this.m_DelayChars = [","];
+        this.m_DelayChars = [",", ".", "-", "*", "?", "!"];
     }
 
     public function SetDelayCharFactor(factor:Float) : Void 
@@ -155,6 +184,31 @@ class UIDialogText extends FlxTypeText
         //Silly
         //this.width = region.width;
         this.fieldWidth = region.width;
+        
+        //{ Some parameters
+        var str:String = flixel.addons.ui.U.xml_str(content.x, "delay");
+        if (str != "") { this.delay = Std.parseFloat(str); }
+        
+        str = flixel.addons.ui.U.xml_str(content.x, "typing_vary");
+        if (str != "") { this.setTypingVariation(Std.parseFloat(str), true); }
+        
+        str = flixel.addons.ui.U.xml_str(content.x, "typing_snd");
+        if (str != "") 
+        {
+            var nameWoExt:String = Defines.ASSETS_TYPING_SOUND_PATH + str;
+            this.sounds = [FlxG.sound.load(FlxAssets.getSound(nameWoExt))];
+        }
+        
+        //This is tricky, system will control this dialog, and auto go to next dialog.
+        str = flixel.addons.ui.U.xml_str(content.x, "sys_ctrl");
+        if (str != "" || str == "true")
+        {
+            this.skipKeys = [];
+            this.m_confirmKeys = [];
+            this.m_bSysAutoConfirm = true;
+        }
+        
+        //}
         
         var txtContent:String = flixel.addons.ui.U.xml_str(content.x, "text");
         
