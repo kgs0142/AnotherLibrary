@@ -6,6 +6,7 @@ import flixel.FlxObject;
 import flixel.FlxSprite;
 import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.math.FlxPoint;
+import flixel.system.FlxAssets.FlxGraphicAsset;
 import flixel.util.FlxSpriteUtil;
 import openfl.display.BlendMode;
 
@@ -55,11 +56,22 @@ class LightSource extends FlxSprite
 		}
 	}
     
+    //{ CustomLight
+	public function AddCustomLightTarget(target:FlxObject, SimpleGraphic:FlxGraphicAsset, Width:Int, Height:Int, Frames:Array<Int>, FrameRate:Int):Void
+    {
+        var customLight:CustomLight = new CustomLight(SimpleGraphic, Width, Height, Frames, FrameRate);
+        customLight.SetFollowTarget(target);
+		this._lights.add(customLight);
+    }
+    //}
+    
     //{ SpotLights
     
 	public function AddSpotLightTarget(target:FlxObject, lightSize:Int):Void
 	{
-		this._lights.add(new SpotLight(target, lightSize));
+        var spotLight:SpotLight = new SpotLight(lightSize);
+        spotLight.SetFollowTarget(target);
+		this._lights.add(spotLight);
 	}
 	
 	public function AddSpotLightTargets(targets:FlxTypedGroup<FlxObject>, lightSize:Int):Void
@@ -75,45 +87,94 @@ class LightSource extends FlxSprite
 
 class Light extends FlxSprite
 {
+    private var _target:FlxObject;
 
+	public function new (?X:Float = 0, ?Y:Float = 0, ?SimpleGraphic:FlxGraphicAsset):Void
+    {
+        super(X, Y, SimpleGraphic);
+    }
+    
+    public function SetFollowTarget(target:FlxObject):Void 
+    {
+        _target = target;
+        var sf = _target.exists ? 1 : 0;
+		this.scale.set(sf, sf);
+    }
 }
 
-class  SpotLight extends Light 
+class CustomLight extends Light 
 {
-    private var _target:FlxObject;
-	
-	public function new (target:FlxObject, lightSize:Int):Void
+	public function new (SimpleGraphic:FlxGraphicAsset, Width:Int, Height:Int, Frames:Array<Int>, FrameRate:Int):Void
+    {
+        super();
+        
+        this.loadGraphic(SimpleGraphic, true, Width, Height);
+        this.animation.add("default", Frames, FrameRate);
+        this.animation.play("default");
+        
+		this.blend = BlendMode.SCREEN;
+    }
+    
+    override public function update(elapsed:Float):Void 
+	{
+        if (_target != null)
+        {
+            var pos = FlxPoint.get((this._target.getScreenPosition().x + this._target.width * 0.5) - this.width * 0.5, 
+                                   (this._target.getScreenPosition().y + this._target.height * 0.5) - this.height * 0.5);
+            
+            if (this.getMidpoint().distanceTo(this._target.getMidpoint()) > 32)
+            {
+                this.setPosition(pos.x, pos.y);
+            }
+            else
+            {
+                x += (pos.x - x) * 0.5;
+                y += (pos.y - y) * 0.5;
+            }
+            
+            var s = _target.exists ? 1 : 0;
+            scale.x += (s - scale.x) * 0.05;
+            scale.y += (s - scale.y) * 0.05;
+		}
+        
+		super.update(elapsed);
+	}
+}
+
+class SpotLight extends Light 
+{
+	public function new (lightSize:Int):Void
 	{
         super();
 
-		this._target = target;
-        
-		var sf = _target.exists ? 1 : 0;
-		this.scale.set(sf, sf);
 		this.makeGraphic(lightSize, lightSize, 0x00ffffff);
 		FlxSpriteUtil.drawCircle(this);
+        
 		this.blend = BlendMode.SCREEN;
 	}
 	
 	override public function update(elapsed:Float):Void 
 	{
-		var pos = FlxPoint.get((this._target.getScreenPosition().x + this._target.width * 0.5) - this.width * 0.5, 
-                               (this._target.getScreenPosition().y + this._target.height * 0.5) - this.height * 0.5);
-		
-		if (this.getMidpoint().distanceTo(this._target.getMidpoint()) > 32)
+        if (_target != null)
         {
-			this.setPosition(pos.x, pos.y);
-        }
-		else
-		{
-			x += (pos.x - x) * 0.5;
-			y += (pos.y - y) * 0.5;
+            var pos = FlxPoint.get((this._target.getScreenPosition().x + this._target.width * 0.5) - this.width * 0.5, 
+                                   (this._target.getScreenPosition().y + this._target.height * 0.5) - this.height * 0.5);
+            
+            if (this.getMidpoint().distanceTo(this._target.getMidpoint()) > 32)
+            {
+                this.setPosition(pos.x, pos.y);
+            }
+            else
+            {
+                x += (pos.x - x) * 0.5;
+                y += (pos.y - y) * 0.5;
+            }
+            
+            var s = _target.exists ? 1 : 0;
+            scale.x += (s - scale.x) * 0.05;
+            scale.y += (s - scale.y) * 0.05;
 		}
-		
-		var s = _target.exists ? 1 : 0;
-		scale.x += (s - scale.x) * 0.05;
-		scale.y += (s - scale.y) * 0.05;
-		
+        
 		super.update(elapsed);
 	}
 }
